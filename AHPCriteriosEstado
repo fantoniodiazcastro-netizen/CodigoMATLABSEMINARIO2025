@@ -1,0 +1,115 @@
+% Análisis AHP (Analytic Hierarchy Process) - Método de Saaty Para Estado
+% Matriz de comparación por pares de criterios
+
+clear; clc; close all;
+
+% Definir la matriz de comparación por pares
+% Criterios: Político, Social, Económico, Ambiental, Técnico
+A = [1,     1/2,  1/9,  1/9,  1/4;
+     2,     1,    1/8,  1/7,  1/2;
+     9,     8,    1,    5,    4;
+     9,     5,    1/2,  1,    3;
+     4,     2,    1/4,  1/3,  1];
+
+criterios = {'Político', 'Social', 'Económico', 'Ambiental', 'Técnico'};
+n = size(A, 1);
+
+fprintf('=== ANÁLISIS AHP - MÉTODO DE SAATY ===\n\n');
+fprintf('Matriz de Comparación por Pares:\n');
+disp(array2table(A, 'VariableNames', criterios, 'RowNames', criterios));
+
+%% 1. Calcular el vector de prioridades (pesos)
+% Método del autovector principal
+
+% Calcular autovalores y autovectores
+[V, D] = eig(A);
+
+% Encontrar el autovalor máximo (lambda_max)
+lambda_max = max(diag(D));
+
+% Encontrar el autovector correspondiente
+[~, idx] = max(diag(D));
+w = V(:, idx);
+
+% Normalizar el vector de prioridades (todos positivos y suma = 1)
+w = real(w);
+w = w / sum(w);
+
+fprintf('\n--- RESULTADOS ---\n\n');
+fprintf('Vector de Prioridades (Pesos):\n');
+for i = 1:n
+    fprintf('  %s: %.4f (%.2f%%)\n', criterios{i}, w(i), w(i)*100);
+end
+
+%% 2. Verificar la consistencia
+
+% Índice de Consistencia (CI)
+CI = (lambda_max - n) / (n - 1);
+
+% Índice de Consistencia Aleatorio (RI) según Saaty
+RI_values = [0, 0, 0.58, 0.90, 1.12, 1.24, 1.32, 1.41, 1.45, 1.49];
+RI = RI_values(n);
+
+% Ratio de Consistencia (CR)
+CR = CI / RI;
+
+fprintf('\n--- ANÁLISIS DE CONSISTENCIA ---\n\n');
+fprintf('Lambda máximo (λmax): %.4f\n', lambda_max);
+fprintf('Índice de Consistencia (CI): %.4f\n', CI);
+fprintf('Índice de Consistencia Aleatorio (RI): %.4f\n', RI);
+fprintf('Ratio de Consistencia (CR): %.4f\n', CR);
+
+if CR < 0.10
+    fprintf('\n✓ La matriz es CONSISTENTE (CR < 0.10)\n');
+else
+    fprintf('\n✗ La matriz es INCONSISTENTE (CR ≥ 0.10)\n');
+    fprintf('  Se recomienda revisar las comparaciones.\n');
+end
+
+%% 3. Visualizaciones
+
+% Gráfico de barras de las prioridades
+figure('Position', [100, 100, 1200, 400]);
+
+subplot(1, 3, 1);
+bar(w, 'FaceColor', [0.2 0.6 0.8]);
+set(gca, 'XTickLabel', criterios, 'XTickLabelRotation', 45);
+ylabel('Peso');
+title('Prioridades de los Criterios');
+grid on;
+ylim([0, max(w)*1.2]);
+
+% Añadir valores sobre las barras
+for i = 1:n
+    text(i, w(i), sprintf('%.3f', w(i)), ...
+        'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom');
+end
+
+% Gráfico de pastel
+subplot(1, 3, 2);
+pie(w, criterios);
+title('Distribución Porcentual de Prioridades');
+
+% Mapa de calor de la matriz
+subplot(1, 3, 3);
+imagesc(log(A));
+colorbar;
+colormap(jet);
+set(gca, 'XTick', 1:n, 'XTickLabel', criterios, 'XTickLabelRotation', 45);
+set(gca, 'YTick', 1:n, 'YTickLabel', criterios);
+title('Mapa de Calor de la Matriz (escala log)');
+axis equal tight;
+
+%% 4. Tabla resumen
+fprintf('\n--- TABLA RESUMEN ---\n\n');
+Resumen = table(criterios', w, w*100, 'VariableNames', ...
+    {'Criterio', 'Peso', 'Porcentaje'});
+disp(Resumen);
+
+%% 5. Análisis de sensibilidad simple
+fprintf('\n--- RANKING DE CRITERIOS ---\n\n');
+[w_sorted, idx_sorted] = sort(w, 'descend');
+for i = 1:n
+    fprintf('%d. %s: %.4f (%.2f%%)\n', i, criterios{idx_sorted(i)}, ...
+        w_sorted(i), w_sorted(i)*100);
+end
