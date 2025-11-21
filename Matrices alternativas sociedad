@@ -1,0 +1,168 @@
+% Análisis AHP - Comparación de Alternativas
+% Alternativas: VCI, VHE, VEE
+
+clear; clc; close all;
+
+% Definir la matriz de comparación por pares
+% Alternativas: VCI, VHE, VEE
+A = [1,     1/6,      3;
+     6,   1,      8;
+     1/3,   1/8,    1];
+
+alternativas = {'VCI', 'VHE', 'VEE'};
+n = size(A, 1);
+
+fprintf('=== ANÁLISIS AHP - COMPARACIÓN DE ALTERNATIVAS ===\n\n');
+fprintf('Matriz de Comparación por Pares:\n');
+disp(array2table(A, 'VariableNames', alternativas, 'RowNames', alternativas));
+
+%% 1. Calcular el vector de prioridades (pesos)
+% Método del autovector principal
+
+% Calcular autovalores y autovectores
+[V, D] = eig(A);
+
+% Encontrar el autovalor máximo (lambda_max)
+lambda_max = max(diag(D));
+
+% Encontrar el autovector correspondiente
+[~, idx] = max(diag(D));
+w = V(:, idx);
+
+% Normalizar el vector de prioridades (todos positivos y suma = 1)
+w = real(w);
+w = w / sum(w);
+
+fprintf('\n--- RESULTADOS ---\n\n');
+fprintf('Vector de Prioridades (Pesos):\n');
+for i = 1:n
+    fprintf('  %s: %.4f (%.2f%%)\n', alternativas{i}, w(i), w(i)*100);
+end
+
+%% 2. Verificar la consistencia
+
+% Índice de Consistencia (CI)
+CI = (lambda_max - n) / (n - 1);
+
+% Índice de Consistencia Aleatorio (RI) según Saaty
+RI_values = [0, 0, 0.58, 0.90, 1.12, 1.24, 1.32, 1.41, 1.45, 1.49];
+RI = RI_values(n);
+
+% Ratio de Consistencia (CR)
+CR = CI / RI;
+
+fprintf('\n--- ANÁLISIS DE CONSISTENCIA ---\n\n');
+fprintf('Lambda máximo (λmax): %.4f\n', lambda_max);
+fprintf('Índice de Consistencia (CI): %.4f\n', CI);
+fprintf('Índice de Consistencia Aleatorio (RI): %.4f\n', RI);
+fprintf('Ratio de Consistencia (CR): %.4f (%.2f%%)\n', CR, CR*100);
+
+if CR < 0.10
+    fprintf('\n✓ La matriz es CONSISTENTE (CR < 0.10)\n');
+    fprintf('  Las comparaciones son aceptables.\n');
+else
+    fprintf('\n✗ La matriz es INCONSISTENTE (CR ≥ 0.10)\n');
+    fprintf('  Se recomienda revisar las comparaciones.\n');
+end
+
+%% 3. Visualizaciones
+
+figure('Position', [100, 100, 1400, 500]);
+
+% Gráfico de barras de las prioridades
+subplot(1, 4, 1);
+bar(w, 'FaceColor', [0.3 0.7 0.4]);
+set(gca, 'XTickLabel', alternativas, 'XTickLabelRotation', 45);
+ylabel('Peso');
+title('Prioridades de Alternativas');
+grid on;
+ylim([0, max(w)*1.2]);
+
+% Añadir valores sobre las barras
+for i = 1:n
+    text(i, w(i), sprintf('%.3f', w(i)), ...
+        'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom', ...
+        'FontWeight', 'bold');
+end
+
+% Gráfico de pastel
+subplot(1, 4, 2);
+pie(w, alternativas);
+title('Distribución Porcentual');
+
+% Mapa de calor de la matriz
+subplot(1, 4, 3);
+imagesc(A);
+colorbar;
+colormap(jet);
+set(gca, 'XTick', 1:n, 'XTickLabel', alternativas, 'XTickLabelRotation', 45);
+set(gca, 'YTick', 1:n, 'YTickLabel', alternativas);
+title('Matriz de Comparaciones');
+axis equal tight;
+
+% Añadir valores en las celdas
+for i = 1:n
+    for j = 1:n
+        if A(i,j) >= 1
+            texto = sprintf('%.0f', A(i,j));
+        else
+            % Mostrar como fracción
+            texto = sprintf('1/%.0f', 1/A(i,j));
+        end
+        text(j, i, texto, 'HorizontalAlignment', 'center', ...
+            'Color', 'white', 'FontWeight', 'bold', 'FontSize', 10);
+    end
+end
+
+% Gráfico de ranking
+subplot(1, 4, 4);
+[w_sorted, idx_sorted] = sort(w, 'descend');
+barh(w_sorted, 'FaceColor', [0.2 0.5 0.8]);
+set(gca, 'YTick', 1:n, 'YTickLabel', alternativas(idx_sorted));
+xlabel('Peso');
+title('Ranking de Alternativas');
+grid on;
+xlim([0, max(w)*1.2]);
+
+% Añadir valores
+for i = 1:n
+    text(w_sorted(i), i, sprintf(' %.3f (%.1f%%)', w_sorted(i), w_sorted(i)*100), ...
+        'VerticalAlignment', 'middle', 'FontWeight', 'bold');
+end
+
+%% 4. Tabla resumen
+fprintf('\n--- TABLA RESUMEN ---\n\n');
+Resumen = table(alternativas', w, w*100, 'VariableNames', ...
+    {'Alternativa', 'Peso', 'Porcentaje'});
+disp(Resumen);
+
+%% 5. Ranking de alternativas
+fprintf('\n--- RANKING DE ALTERNATIVAS ---\n\n');
+for i = 1:n
+    fprintf('%d. %s: %.4f (%.2f%%)\n', i, alternativas{idx_sorted(i)}, ...
+        w_sorted(i), w_sorted(i)*100);
+end
+
+%% 6. Método alternativo: Media Geométrica
+fprintf('\n\n=== VERIFICACIÓN: MÉTODO DE MEDIA GEOMÉTRICA ===\n\n');
+
+% Calcular media geométrica de cada fila
+w_geometric = zeros(n, 1);
+for i = 1:n
+    w_geometric(i) = prod(A(i,:))^(1/n);
+end
+
+% Normalizar
+w_geometric = w_geometric / sum(w_geometric);
+
+fprintf('Pesos usando Media Geométrica:\n');
+for i = 1:n
+    fprintf('  %s: %.4f (%.2f%%)\n', alternativas{i}, w_geometric(i), w_geometric(i)*100);
+end
+
+fprintf('\nComparación de métodos:\n');
+Comparacion = table(alternativas', w, w_geometric, abs(w-w_geometric), ...
+    'VariableNames', {'Alternativa', 'Autovector', 'Media_Geometrica', 'Diferencia'});
+disp(Comparacion);
+
+fprintf('\n--- ANÁLISIS COMPLETO FINALIZADO ---\n');
