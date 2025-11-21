@@ -1,0 +1,458 @@
+% ========================================================================
+% MÉTODO DE SAATY - SUPERMATRIZ COMPLETA
+% E = Estatal | S = Sociedad
+% Vinculación: OBJ1 → Alternativas E | OBJ2 → Alternativas S
+% ========================================================================
+
+clc; clear; close all;
+
+fprintf('╔════════════════════════════════════════════════════════════════╗\n');
+fprintf('║     MÉTODO DE SAATY - ANÁLISIS DE SUPERMATRIZ COMPLETO        ║\n');
+fprintf('║     E = Estatal  |  S = Sociedad                              ║\n');
+fprintf('╚════════════════════════════════════════════════════════════════╝\n\n');
+
+% ========================================================================
+% PASO 1: SUPERMATRIZ NO PONDERADA (Unweighted Supermatrix)
+% ========================================================================
+fprintf('══════════════════════════════════════════════════════════════════\n');
+fprintf('PASO 1: SUPERMATRIZ NO PONDERADA (Unweighted Supermatrix)\n');
+fprintf('══════════════════════════════════════════════════════════════════\n\n');
+
+% Matriz original según imagen
+S_unweighted = [
+    % OBJ1     C1E      C2E      C3E      C4E      C5E      A1E      A2E      A3E      OBJ2     C1S      C2S      C3S      C4S      C5S      A1S      A2S      A3S
+    1,         0.032428,0.051027,0.55242, 0.25977, 0.10436, 0,       0,       0,       1,       0,       0,       0,       0,       0,       0,       0,       0;       % OBJ1
+    0.032428,  1,       0,       0,       0,       0,       0.7009,  0.243,   0.0562,  0,       0,       0,       0,       0,       0,       0,       0,       0;       % C1E
+    0.051027,  0,       1,       0,       0,       0,       0.7334,  0.1991,  0.0675,  0,       0,       0,       0,       0,       0,       0,       0,       0;       % C2E
+    0.55242,   0,       0,       1,       0,       0,       0.7959,  0.1211,  0.083,   0,       0,       0,       0,       0,       0,       0,       0,       0;       % C3E
+    0.25977,   0,       0,       0,       1,       0,       0.3434,  0.5139,  0.1437,  0,       0,       0,       0,       0,       0,       0,       0,       0;       % C4E
+    0.10436,   0,       0,       0,       0,       1,       0.1662,  0.7612,  0.0726,  0,       0,       0,       0,       0,       0,       0,       0,       0;       % C5E
+    0,         0.7009,  0.7334,  0.7959,  0.3434,  0.1662,  1,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0;       % A1E
+    0,         0.243,   0.1991,  0.1211,  0.5139,  0.7612,  0,       1,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0;       % A2E
+    0,         0.0562,  0.0675,  0.083,   0.1437,  0.0726,  0,       0,       1,       0,       0,       0,       0,       0,       0,       0,       0,       0;       % A3E
+    1,         0,       0,       0,       0,       0,       0,       0,       0,       1,       0.037141,0.43348, 0.31773, 0.13809, 0.073554,0,       0,       0;       % OBJ2
+    0,         0,       0,       0,       0,       0,       0,       0,       0,       0.037141,1,       0,       0,       0,       0,       0.7085,  0.2311,  0.0603;  % C1S
+    0,         0,       0,       0,       0,       0,       0,       0,       0,       0.43348, 0,       1,       0,       0,       0,       0.1991,  0.0675,  0.7334;  % C2S
+    0,         0,       0,       0,       0,       0,       0,       0,       0,       0.31773, 0,       0,       1,       0,       0,       0.7766,  0.153,   0.0704;  % C3S
+    0,         0,       0,       0,       0,       0,       0,       0,       0,       0.13809, 0,       0,       0,       1,       0,       0.0633,  0.1939,  0.7429;  % C4S
+    0,         0,       0,       0,       0,       0,       0,       0,       0,       0.073554,0,       0,       0,       0,       1,       0.1662,  0.7612,  0.0726;  % C5S
+    0,         0,       0,       0,       0,       0,       0,       0,       0,       0,       0.7085,  0.1991,  0.7766,  0.0633,  0.1662,  1,       0,       0;       % A1S
+    0,         0,       0,       0,       0,       0,       0,       0,       0,       0,       0.2311,  0.0675,  0.153,   0.1939,  0.7612,  0,       1,       0;       % A2S
+    0,         0,       0,       0,       0,       0,       0,       0,       0,       0,       0.0603,  0.7334,  0.0704,  0.7429,  0.0726,  0,       0,       1        % A3S
+];
+
+nombres = {'OBJ1', 'C1E', 'C2E', 'C3E', 'C4E', 'C5E', 'A1E', 'A2E', 'A3E', ...
+           'OBJ2', 'C1S', 'C2S', 'C3S', 'C4S', 'C5S', 'A1S', 'A2S', 'A3S'};
+
+n = size(S_unweighted, 1);
+
+fprintf('Dimensión: %dx%d\n', n, n);
+fprintf('Estructura jerárquica:\n');
+fprintf('  • OBJ1 (Estatal) → C1E-C5E → A1E-A3E\n');
+fprintf('  • OBJ2 (Sociedad) → C1S-C5S → A1S-A3S\n\n');
+
+fprintf('Matriz completa (primeras 10 filas x 10 columnas):\n\n');
+fprintf('%-8s', '');
+for j = 1:10
+    fprintf('%-10s', nombres{j});
+end
+fprintf('\n');
+fprintf(repmat('-', 1, 108));
+fprintf('\n');
+for i = 1:10
+    fprintf('%-8s', nombres{i});
+    for j = 1:10
+        fprintf('%-10.6f', S_unweighted(i,j));
+    end
+    fprintf('\n');
+end
+fprintf('\n');
+
+% ========================================================================
+% PASO 2: SUPERMATRIZ PONDERADA (Weighted Supermatrix)
+% ========================================================================
+fprintf('══════════════════════════════════════════════════════════════════\n');
+fprintf('PASO 2: SUPERMATRIZ PONDERADA (Weighted Supermatrix)\n');
+fprintf('══════════════════════════════════════════════════════════════════\n\n');
+
+fprintf('Normalizando por columnas (cada columna debe sumar 1)...\n\n');
+
+suma_columnas = sum(S_unweighted, 1);
+S_weighted = S_unweighted ./ repmat(suma_columnas, n, 1);
+
+% Verificar normalización
+suma_cols_weighted = sum(S_weighted, 1);
+fprintf('✓ Verificación de normalización:\n');
+fprintf('   Columna 1:  %.15f\n', suma_cols_weighted(1));
+fprintf('   Columna 10: %.15f\n', suma_cols_weighted(10));
+fprintf('   Columna 18: %.15f\n', suma_cols_weighted(18));
+fprintf('   Todas las columnas suman 1: %s\n\n', ...
+    iif(all(abs(suma_cols_weighted - 1) < 1e-10), 'SÍ ✓', 'NO'));
+
+fprintf('Matriz ponderada (primeras 10 filas x 10 columnas):\n\n');
+fprintf('%-8s', '');
+for j = 1:10
+    fprintf('%-10s', nombres{j});
+end
+fprintf('\n');
+fprintf(repmat('-', 1, 108));
+fprintf('\n');
+for i = 1:10
+    fprintf('%-8s', nombres{i});
+    for j = 1:10
+        fprintf('%-10.6f', S_weighted(i,j));
+    end
+    fprintf('\n');
+end
+fprintf('\n');
+
+% ========================================================================
+% PASO 3: SUPERMATRIZ LÍMITE (Limit Supermatrix)
+% ========================================================================
+fprintf('══════════════════════════════════════════════════════════════════\n');
+fprintf('PASO 3: SUPERMATRIZ LÍMITE (Limit Supermatrix)\n');
+fprintf('══════════════════════════════════════════════════════════════════\n\n');
+
+fprintf('Elevando la matriz ponderada a potencias sucesivas hasta convergencia...\n\n');
+
+S_limit = S_weighted;
+max_iter = 2000;
+tolerancia = 1e-10;
+convergio = false;
+
+fprintf('Iter    │  Diferencia Máxima\n');
+fprintf('────────┼───────────────────\n');
+
+for k = 1:max_iter
+    S_anterior = S_limit;
+    S_limit = S_limit * S_weighted;
+    
+    diferencia = max(max(abs(S_limit - S_anterior)));
+    
+    if mod(k, 100) == 0 || k == 1
+        fprintf(' %4d   │    %.2e\n', k, diferencia);
+    end
+    
+    if diferencia < tolerancia
+        fprintf('────────┴───────────────────\n');
+        fprintf('✓ Convergencia en iteración %d\n', k);
+        fprintf('✓ Diferencia final: %.2e\n\n', diferencia);
+        convergio = true;
+        break;
+    end
+end
+
+if ~convergio
+    fprintf('⚠️  Máximo de iteraciones alcanzado\n\n');
+end
+
+fprintf('Matriz límite (primeras 10 filas x 5 columnas):\n');
+fprintf('Nota: Todas las columnas son idénticas (vector de prioridades)\n\n');
+fprintf('%-8s', '');
+for j = 1:5
+    fprintf('%-14s', sprintf('Col%d', j));
+end
+fprintf('\n');
+fprintf(repmat('-', 1, 78));
+fprintf('\n');
+for i = 1:10
+    fprintf('%-8s', nombres{i});
+    for j = 1:5
+        fprintf('%-14.10f', S_limit(i,j));
+    end
+    fprintf('\n');
+end
+fprintf('\n');
+
+% Verificar que columnas sean idénticas
+diff_cols = max(abs(S_limit(:,1) - S_limit(:,10)));
+fprintf('Diferencia entre Col1 y Col10: %.2e\n', diff_cols);
+fprintf('Columnas idénticas: %s\n\n', iif(diff_cols < 1e-8, 'SÍ ✓', 'NO'));
+
+% ========================================================================
+% PASO 4: EXTRAER PESOS GLOBALES
+% ========================================================================
+fprintf('══════════════════════════════════════════════════════════════════\n');
+fprintf('PASO 4: EXTRACCIÓN DE PESOS GLOBALES\n');
+fprintf('══════════════════════════════════════════════════════════════════\n\n');
+
+pesos_globales = S_limit(:, 1);
+pesos_globales = pesos_globales / sum(pesos_globales);
+
+fprintf('Vector de prioridades globales:\n\n');
+fprintf('┌────────────┬──────────────────┬─────────────────┐\n');
+fprintf('│  Elemento  │  Peso Global     │   Porcentaje    │\n');
+fprintf('├────────────┼──────────────────┼─────────────────┤\n');
+for i = 1:n
+    fprintf('│   %-8s │   %.12f   │    %.6f%%    │\n', ...
+        nombres{i}, pesos_globales(i), pesos_globales(i)*100);
+end
+fprintf('└────────────┴──────────────────┴─────────────────┘\n');
+fprintf('   Suma total: %.15f\n\n', sum(pesos_globales));
+
+% ========================================================================
+% PASO 5: ALTERNATIVAS VINCULADAS A OBJETIVOS
+% ========================================================================
+fprintf('══════════════════════════════════════════════════════════════════\n');
+fprintf('PASO 5: ALTERNATIVAS VINCULADAS A OBJETIVOS\n');
+fprintf('══════════════════════════════════════════════════════════════════\n\n');
+
+% Índices
+idx_obj1 = 1;
+idx_obj2 = 10;
+idx_alt_est = [7, 8, 9];    % A1E, A2E, A3E
+idx_alt_soc = [16, 17, 18]; % A1S, A2S, A3S
+
+% Pesos de objetivos
+peso_obj1 = pesos_globales(idx_obj1);
+peso_obj2 = pesos_globales(idx_obj2);
+
+fprintf('🎯 PESOS DE OBJETIVOS:\n\n');
+fprintf('   OBJ1 (Estatal):  %.10f (%.6f%%)\n', peso_obj1, peso_obj1*100);
+fprintf('   OBJ2 (Sociedad): %.10f (%.6f%%)\n\n', peso_obj2, peso_obj2*100);
+
+fprintf('🔗 VINCULACIONES:\n');
+fprintf('   OBJ1 → Alternativas Estatales (A1E, A2E, A3E)\n');
+fprintf('   OBJ2 → Alternativas Sociedad (A1S, A2S, A3S)\n\n');
+
+% ========================================================================
+% ALTERNATIVAS ESTATALES (E) - VINCULADAS A OBJ1
+% ========================================================================
+fprintf('╔════════════════════════════════════════════════════════════════╗\n');
+fprintf('║     ALTERNATIVAS ESTATALES (E) - VINCULADAS A OBJ1             ║\n');
+fprintf('╚════════════════════════════════════════════════════════════════╝\n\n');
+
+pesos_est = pesos_globales(idx_alt_est);
+nombres_est = nombres(idx_alt_est);
+
+% Normalizar para que sumen 1 dentro del grupo E
+pesos_est_norm = pesos_est / sum(pesos_est);
+
+[pesos_est_sorted, idx_est_rank] = sort(pesos_est_norm, 'descend');
+nombres_est_sorted = nombres_est(idx_est_rank);
+
+fprintf('┌─────────┬──────────────┬──────────────────┬──────────────────┬──────────────────────┐\n');
+fprintf('│ Ranking │   Elemento   │  Peso Global     │  Peso Normalizado│  %% Aporte a OBJ1    │\n');
+fprintf('│         │              │  (original)      │  (Σ = 1)         │  (dentro de E)       │\n');
+fprintf('├─────────┼──────────────┼──────────────────┼──────────────────┼──────────────────────┤\n');
+
+medallas = {'🥇', '🥈', '🥉'};
+for i = 1:3
+    idx_original = idx_alt_est(idx_est_rank(i));
+    fprintf('│  %s %d   │     %-8s │    %.10f  │    %.10f  │       %.6f%%      │\n', ...
+        medallas{i}, i, nombres_est_sorted{i}, ...
+        pesos_globales(idx_original), pesos_est_sorted(i), pesos_est_sorted(i)*100);
+end
+
+fprintf('└─────────┴──────────────┴──────────────────┴──────────────────┴──────────────────────┘\n');
+fprintf('   Suma normalizada: %.15f ✓\n\n', sum(pesos_est_norm));
+
+fprintf('📊 ANÁLISIS ESTATALES (E):\n');
+fprintf('   🥇 Ganador: %s\n', nombres_est_sorted{1});
+fprintf('      • Peso normalizado: %.6f%% (dentro de E)\n', pesos_est_sorted(1)*100);
+fprintf('      • Aporta %.6f%% al objetivo OBJ1\n\n', pesos_est_sorted(1)*100);
+
+% ========================================================================
+% ALTERNATIVAS SOCIEDAD (S) - VINCULADAS A OBJ2
+% ========================================================================
+fprintf('╔════════════════════════════════════════════════════════════════╗\n');
+fprintf('║     ALTERNATIVAS SOCIEDAD (S) - VINCULADAS A OBJ2              ║\n');
+fprintf('╚════════════════════════════════════════════════════════════════╝\n\n');
+
+pesos_soc = pesos_globales(idx_alt_soc);
+nombres_soc = nombres(idx_alt_soc);
+
+% Normalizar para que sumen 1 dentro del grupo S
+pesos_soc_norm = pesos_soc / sum(pesos_soc);
+
+[pesos_soc_sorted, idx_soc_rank] = sort(pesos_soc_norm, 'descend');
+nombres_soc_sorted = nombres_soc(idx_soc_rank);
+
+fprintf('┌─────────┬──────────────┬──────────────────┬──────────────────┬──────────────────────┐\n');
+fprintf('│ Ranking │   Elemento   │  Peso Global     │  Peso Normalizado│  %% Aporte a OBJ2    │\n');
+fprintf('│         │              │  (original)      │  (Σ = 1)         │  (dentro de S)       │\n');
+fprintf('├─────────┼──────────────┼──────────────────┼──────────────────┼──────────────────────┤\n');
+
+for i = 1:3
+    idx_original = idx_alt_soc(idx_soc_rank(i));
+    fprintf('│  %s %d   │     %-8s │    %.10f  │    %.10f  │       %.6f%%      │\n', ...
+        medallas{i}, i, nombres_soc_sorted{i}, ...
+        pesos_globales(idx_original), pesos_soc_sorted(i), pesos_soc_sorted(i)*100);
+end
+
+fprintf('└─────────┴──────────────┴──────────────────┴──────────────────┴──────────────────────┘\n');
+fprintf('   Suma normalizada: %.15f ✓\n\n', sum(pesos_soc_norm));
+
+fprintf('📊 ANÁLISIS SOCIEDAD (S):\n');
+fprintf('   🥇 Ganador: %s\n', nombres_soc_sorted{1});
+fprintf('      • Peso normalizado: %.6f%% (dentro de S)\n', pesos_soc_sorted(1)*100);
+fprintf('      • Aporta %.6f%% al objetivo OBJ2\n\n', pesos_soc_sorted(1)*100);
+
+% ========================================================================
+% RESUMEN EJECUTIVO
+% ========================================================================
+fprintf('╔════════════════════════════════════════════════════════════════╗\n');
+fprintf('║                  📋 RESUMEN EJECUTIVO                          ║\n');
+fprintf('╚════════════════════════════════════════════════════════════════╝\n\n');
+
+fprintf('🎯 DECISIONES ÓPTIMAS:\n\n');
+fprintf('   ESTATAL (E):\n');
+fprintf('      • Ganador: %s\n', nombres_est_sorted{1});
+fprintf('      • Peso normalizado: %.6f%% (de las alternativas E)\n', pesos_est_sorted(1)*100);
+fprintf('      • Vinculado a OBJ1 (Estatal: %.6f%%)\n\n', peso_obj1*100);
+
+fprintf('   SOCIEDAD (S):\n');
+fprintf('      • Ganador: %s\n', nombres_soc_sorted{1});
+fprintf('      • Peso normalizado: %.6f%% (de las alternativas S)\n', pesos_soc_sorted(1)*100);
+fprintf('      • Vinculado a OBJ2 (Sociedad: %.6f%%)\n\n', peso_obj2*100);
+
+fprintf('📊 DISTRIBUCIÓN DE OBJETIVOS:\n');
+fprintf('   • OBJ1 (Estatal):  %.6f%% del total\n', peso_obj1*100);
+fprintf('   • OBJ2 (Sociedad): %.6f%% del total\n\n', peso_obj2*100);
+
+fprintf('✅ VERIFICACIONES:\n');
+fprintf('   • Convergencia: %s\n', iif(convergio, 'SÍ', 'NO'));
+fprintf('   • Suma pesos globales = 1: %s\n', iif(abs(sum(pesos_globales)-1) < 1e-10, 'SÍ ✓', 'NO'));
+fprintf('   • Suma alternativas E norm. = 1: %s\n', iif(abs(sum(pesos_est_norm)-1) < 1e-10, 'SÍ ✓', 'NO'));
+fprintf('   • Suma alternativas S norm. = 1: %s\n\n', iif(abs(sum(pesos_soc_norm)-1) < 1e-10, 'SÍ ✓', 'NO'));
+
+% ========================================================================
+% VISUALIZACIONES
+% ========================================================================
+fprintf('📈 Generando gráficas...\n\n');
+
+figure('Name', 'Análisis Saaty - Estatales y Sociedad', 'Position', [50 50 1600 900]);
+
+% Gráfico 1: Alternativas Estatales
+subplot(2,3,1);
+colores_est = [0.2 0.8 0.3; 0.8 0.6 0.2; 0.8 0.3 0.2];
+b1 = bar(pesos_est_sorted, 'FaceColor', 'flat', 'EdgeColor', 'k', 'LineWidth', 2);
+b1.CData = colores_est;
+set(gca, 'XTickLabel', nombres_est_sorted, 'FontSize', 12, 'FontWeight', 'bold');
+ylabel('Peso Normalizado', 'FontSize', 12, 'FontWeight', 'bold');
+title('🏆 Alternativas ESTATALES (E)', 'FontSize', 13, 'FontWeight', 'bold');
+grid on;
+ylim([0 max(pesos_est_sorted)*1.3]);
+for i = 1:3
+    text(i, pesos_est_sorted(i), sprintf('%.2f%%', pesos_est_sorted(i)*100), ...
+        'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom', ...
+        'FontWeight', 'bold', 'FontSize', 11);
+end
+text(2, max(pesos_est_sorted)*1.2, 'Σ = 1.0', 'HorizontalAlignment', 'center', ...
+    'FontWeight', 'bold', 'FontSize', 10, 'Color', 'blue', 'BackgroundColor', 'yellow');
+
+% Gráfico 2: Alternativas Sociedad
+subplot(2,3,2);
+colores_soc = [0.3 0.6 0.9; 0.6 0.4 0.8; 0.9 0.3 0.5];
+b2 = bar(pesos_soc_sorted, 'FaceColor', 'flat', 'EdgeColor', 'k', 'LineWidth', 2);
+b2.CData = colores_soc;
+set(gca, 'XTickLabel', nombres_soc_sorted, 'FontSize', 12, 'FontWeight', 'bold');
+ylabel('Peso Normalizado', 'FontSize', 12, 'FontWeight', 'bold');
+title('🏆 Alternativas SOCIEDAD (S)', 'FontSize', 13, 'FontWeight', 'bold');
+grid on;
+ylim([0 max(pesos_soc_sorted)*1.3]);
+for i = 1:3
+    text(i, pesos_soc_sorted(i), sprintf('%.2f%%', pesos_soc_sorted(i)*100), ...
+        'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom', ...
+        'FontWeight', 'bold', 'FontSize', 11);
+end
+text(2, max(pesos_soc_sorted)*1.2, 'Σ = 1.0', 'HorizontalAlignment', 'center', ...
+    'FontWeight', 'bold', 'FontSize', 10, 'Color', 'blue', 'BackgroundColor', 'yellow');
+
+% Gráfico 3: Comparación Objetivos
+subplot(2,3,3);
+bar([peso_obj1, peso_obj2]*100, 'FaceColor', 'flat', 'EdgeColor', 'k', 'LineWidth', 2);
+set(gca, 'XTickLabel', {'OBJ1 (Estatal)', 'OBJ2 (Sociedad)'}, 'FontSize', 11, 'FontWeight', 'bold');
+ylabel('Peso (%)', 'FontSize', 12, 'FontWeight', 'bold');
+title('Pesos de Objetivos', 'FontSize', 13, 'FontWeight', 'bold');
+grid on;
+for i = 1:2
+    val = [peso_obj1, peso_obj2];
+    text(i, val(i)*100, sprintf('%.2f%%', val(i)*100), ...
+        'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom', ...
+        'FontWeight', 'bold', 'FontSize', 11);
+end
+
+% Gráfico 4: Todas las alternativas
+subplot(2,3,4);
+todas_alt = [pesos_est_norm; pesos_soc_norm];
+todas_nombres = [nombres_est, nombres_soc];
+colores_todas = [colores_est; colores_soc];
+b4 = bar(todas_alt, 'FaceColor', 'flat', 'EdgeColor', 'k', 'LineWidth', 1.5);
+b4.CData = colores_todas;
+set(gca, 'XTickLabel', todas_nombres, 'FontSize', 11, 'FontWeight', 'bold');
+ylabel('Peso Normalizado', 'FontSize', 12, 'FontWeight', 'bold');
+title('Todas las Alternativas (Norm.)', 'FontSize', 13, 'FontWeight', 'bold');
+grid on;
+line([3.5 3.5], ylim, 'Color', 'r', 'LineStyle', '--', 'LineWidth', 2);
+text(3.5, max(todas_alt)*0.8, '← E | S →', 'HorizontalAlignment', 'center', ...
+    'FontWeight', 'bold', 'FontSize', 12, 'Color', 'r', 'BackgroundColor', 'white');
+
+% Gráfico 5: Distribución completa
+subplot(2,3,[5 6]);
+colores_completo = [1 0 0; repmat([0.3 0.6 0.9], 5, 1); colores_est; ...
+                    0 1 0; repmat([0.9 0.5 0.3], 5, 1); colores_soc];
+b5 = bar(pesos_globales, 'FaceColor', 'flat', 'EdgeColor', 'k', 'LineWidth', 1);
+b5.CData = colores_completo;
+set(gca, 'XTickLabel', nombres, 'XTickLabelRotation', 45, 'FontSize', 10);
+ylabel('Peso Global', 'FontSize', 12, 'FontWeight', 'bold');
+title('Distribución Completa - Pesos Globales', 'FontSize', 13, 'FontWeight', 'bold');
+grid on;
+line([9.5 9.5], ylim, 'Color', 'r', 'LineStyle', '-', 'LineWidth', 2);
+text(5, max(pesos_globales)*0.9, 'ESTATAL', 'HorizontalAlignment', 'center', ...
+    'FontWeight', 'bold', 'FontSize', 11, 'Color', 'blue');
+text(14, max(pesos_globales)*0.9, 'SOCIEDAD', 'HorizontalAlignment', 'center', ...
+    'FontWeight', 'bold', 'FontSize', 11, 'Color', 'green');
+
+% ========================================================================
+% GUARDAR RESULTADOS
+% ========================================================================
+resultados.matrices.unweighted = S_unweighted;
+resultados.matrices.weighted = S_weighted;
+resultados.matrices.limite = S_limit;
+
+resultados.pesos_globales = pesos_globales;
+resultados.nombres = nombres;
+
+resultados.objetivos.obj1_peso = peso_obj1;
+resultados.objetivos.obj2_peso = peso_obj2;
+
+resultados.estatales.nombres = nombres_est;
+resultados.estatales.pesos_globales = pesos_est;
+resultados.estatales.pesos_normalizados = pesos_est_norm;
+resultados.estatales.ranking = idx_est_rank;
+resultados.estatales.ganador = nombres_est_sorted{1};
+resultados.estatales.peso_ganador_norm = pesos_est_sorted(1);
+
+resultados.sociedad.nombres = nombres_soc;
+resultados.sociedad.pesos_globales = pesos_soc;
+resultados.sociedad.pesos_normalizados = pesos_soc_norm;
+resultados.sociedad.ranking = idx_soc_rank;
+resultados.sociedad.ganador = nombres_soc_sorted{1};
+resultados.sociedad.peso_ganador_norm = pesos_soc_sorted(1);
+
+resultados.convergencia = convergio;
+
+fprintf('════════════════════════════════════════════════════════════════\n');
+fprintf('✅ ANÁLISIS COMPLETO - MÉTODO DE SAATY\n');
+fprintf('════════════════════════════════════════════════════════════════\n\n');
+fprintf('📁 Resultados guardados en variable "resultados"\n');
+fprintf('📊 Gráficas generadas correctamente\n\n');
+fprintf('🎯 GANADORES FINALES:\n');
+fprintf('   • Estatal (E): %s - %.2f%% (normalizado)\n', ...
+    resultados.estatales.ganador, resultados.estatales.peso_ganador_norm*100);
+fprintf('   • Sociedad (S): %s - %.2f%% (normalizado)\n\n', ...
+    resultados.sociedad.ganador, resultados.sociedad.peso_ganador_norm*100);
+
+fprintf('🔗 VINCULACIONES CONFIRMADAS:\n');
+fprintf('   • OBJ1 → Alternativas E (A1E, A2E, A3E) - Suma normalizada: %.15f\n', sum(pesos_est_norm));
+fprintf('   • OBJ2 → Alternativas S (A1S, A2S, A3S) - Suma normalizada: %.15f\n\n', sum(pesos_soc_norm));
+
+% Función auxiliar
+function out = iif(condition, true_val, false_val)
+    if condition
+        out = true_val;
+    else
+        out = false_val;
+    end
+end
